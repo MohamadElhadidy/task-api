@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ErrorResource;
+use App\Http\Resources\SuccessResource;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -13,7 +15,11 @@ class TaskController extends Controller
      */
     public function index()
     {
-        return response()->json(['tasks' => Task::all()]);
+        return new SuccessResource(
+            'User Logged In Successfully',
+            ['tasks' => request()->user()->tasks],
+        );
+
     }
 
     /**
@@ -24,16 +30,19 @@ class TaskController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'is_completed' => 'required|in:1,0',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 422);
         }
 
-        Task::create($validator->validated());
 
-        return response()->json(['message' => 'Task created successfully'], 201);
+        request()->user()->tasks()->create($validator->validated());
+
+        return new SuccessResource(
+            'Task created successfully',
+            null,
+            201);
     }
 
     /**
@@ -43,9 +52,14 @@ class TaskController extends Controller
     {
         $task = Task::find($taskId);
         if ($task) {
-            return response()->json(['task' => $task]);
+            return new SuccessResource(
+                'Task created successfully',
+                [
+                    'task' => $task
+                ],
+            );
         } else {
-            return response()->json(['message' => 'Task not found'], 404);
+            return new ErrorResource('Task not found.', null, 404);
         }
     }
 
@@ -58,19 +72,21 @@ class TaskController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'is_completed' => 'in:1,0',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 422);
+            return new ErrorResource('Validation failed', $validator->errors(), 422);
         }
 
         $task = Task::find($taskId);
         if ($task) {
             $task->update($validator->validated());
-            return response()->json(['message' => 'Task updated successfully'], 201);
+            return new SuccessResource(
+                'Task updated successfully',
+                null            );
         } else {
-            return response()->json(['message' => 'Task not found'], 404);
+            return new ErrorResource('Task not found', 404);
+
         }
     }
 
@@ -82,9 +98,14 @@ class TaskController extends Controller
         $task = Task::find($taskId);
         if ($task) {
             $task->delete();
-            return response()->json(['message' => 'Task deleted successfully'], 201);
+            return new SuccessResource(
+                'Task deleted successfully',
+                null,
+                204
+            );
         } else {
-            return response()->json(['message' => 'Task not found'], 404);
+            return new ErrorResource('Task not found', 404);
+
         }
     }
 }
