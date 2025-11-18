@@ -42,7 +42,8 @@ class TaskController extends Controller
         return new SuccessResource(
             'Task created successfully',
             null,
-            201);
+            201
+        );
     }
 
     /**
@@ -50,7 +51,7 @@ class TaskController extends Controller
      */
     public function show(string $taskId)
     {
-        $task = Task::find($taskId);
+        $task = request()->user()->tasks()->find($taskId);
         if ($task) {
             return new SuccessResource(
                 'Task created successfully',
@@ -78,12 +79,13 @@ class TaskController extends Controller
             return new ErrorResource('Validation failed', $validator->errors(), 422);
         }
 
-        $task = Task::find($taskId);
+        $task = request()->user()->tasks()->find($taskId);
         if ($task) {
             $task->update($validator->validated());
             return new SuccessResource(
                 'Task updated successfully',
-                null            );
+                null
+            );
         } else {
             return new ErrorResource('Task not found', 404);
 
@@ -95,7 +97,7 @@ class TaskController extends Controller
      */
     public function destroy(string $taskId)
     {
-        $task = Task::find($taskId);
+        $task = request()->user()->tasks()->find($taskId);
         if ($task) {
             $task->delete();
             return new SuccessResource(
